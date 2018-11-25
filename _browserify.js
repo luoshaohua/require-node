@@ -4,34 +4,21 @@ function getQPath(params) {
     return _qPath;
 }
 
-// function toCommonJS(modulePath, moduleName, config) {
-//     return 'var _require=require("require-node/_require.js");\n' +
-//         'var q=require("' + getQPath() + '");\n' +
-//         _exportsFunction(modulePath, moduleName, config);
-// }
-function toCommonJS(modulePath, moduleName, config) {
-    var config = config || {};
-    //格式化config
-    //糖参数:withCredentials
-    if (config.withCredentials) {
-        config.xhrFields = config.xhrFields || {};
-        config.xhrFields.withCredentials = config.withCredentials;
-    }
-    if (typeof config.enableSync === 'string') {
-        config.enableSync = config.enableSync.split(',');
-    }
-    var enableSync = config.enableSync === true || config.enableSync instanceof Array && config.enableSync.indexOf(moduleName) > -1;
+var c = require('./config');
+var config;
+function toCommonJS(modulePath, moduleName, options) {
+    config = config || c.getConfig(options);
 
-    var ret = 'var config = { q: require(' + JSON.stringify(getQPath()) + ')';
-    ['path', 'isDebug', 'xhrFields', 'reject'].forEach(key => {
-        if (config[key]) {
-            ret += ',' + key + ':' + (typeof config[key] === 'function' ? config[key].toString() : JSON.stringify(config[key]));
+    var configStr = '';
+    ['path', 'isDebug', 'reject'].forEach(key => {
+        var value = config[key];
+        if (value) {
+            configStr += ',' + key + ':' + (typeof value === 'function' ? value.toString() : JSON.stringify(value));
         }
     })
-    ret += '};';
-    // if (enableSync) { ret += 'exports.$sync={};\n'; }
 
-    ret += `
+    return `
+    var config = { q: require(${JSON.stringify(getQPath())}) ${configStr} };
     var moduleName = ${JSON.stringify(moduleName)};
     var _require = require("require-node/_require.js");
     function createAjax(__keys_path__) {
@@ -50,55 +37,6 @@ function toCommonJS(modulePath, moduleName, config) {
         }
     };
     module.exports = new Proxy(createAjax([]), handler);`
-    return ret;
-}
-
-function toCMD(modulePath, moduleName, config) {
-    return 'define(function(require,exports,module){\n' +
-        'var _require=require("/node_modules/require-node/_require.js");\n' +
-        'var q=require("/node_modules/' + getQPath() + '/q.js")||window.Q;\n' +
-        _exportsFunction(modulePath, moduleName, config) +
-        '\n})';
-}
-
-function _exportsFunction(modulePath, moduleName, config) {
-    var config = config || {};
-    //格式化config
-    //糖参数:withCredentials
-    if (config.withCredentials) {
-        config.xhrFields = config.xhrFields || {};
-        config.xhrFields.withCredentials = config.withCredentials;
-    }
-    if (typeof config.enableSync === 'string') {
-        config.enableSync = config.enableSync.split(',');
-    }
-    var enableSync = config.enableSync === true || config.enableSync instanceof Array && config.enableSync.indexOf(moduleName) > -1;
-
-    var ret = 'var config={q:q';
-    ['path', 'isDebug', 'xhrFields', 'reject'].forEach(key => {
-        if (config[key]) {
-            ret += ',' + key + ':' + (typeof config[key] === 'function' ? config[key].toString() : JSON.stringify(config[key]));
-        }
-    })
-    ret += '};\n';
-    if (enableSync) { ret += 'exports.$sync={};\n'; }
-
-    var m = require(modulePath);
-    var functionNames = [];
-    for (f in m) {
-        if (typeof m[f] === 'function') {
-            functionNames.push(f);
-        }
-    }
-    ret += 'var moduleName=' + JSON.stringify(moduleName) + ';\n';
-    ret += functionNames.map(function (f) {
-        var fun = '=function(){return _require(moduleName,"' + f + '",arguments,config';
-        var ret = 'exports.' + f + fun + ')}';
-        if (enableSync) { ret += ';\nexports.$sync.' + f + fun + ',true)}'; }
-        return ret;
-    }).join(';\n');
-    return ret;
 }
 
 exports.toCommonJS = toCommonJS;
-exports.toCMD = toCMD;

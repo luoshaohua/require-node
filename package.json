@@ -1,33 +1,5 @@
 {
-  "_args": [
-    [
-      "require-node@1.3.2",
-      "/Users/luoshaohua/open/require-node-example/example1_simple"
-    ]
-  ],
-  "_from": "require-node@1.3.2",
-  "_id": "require-node@1.3.2",
-  "_inBundle": false,
-  "_integrity": "sha512-AMP4Pa0n1ntWcT3HE1/hlFHuTeN3tvkZIW4FORe+SZV8vo51xHyj32KQPZBhf32N6867+KiIL3VJO3zfVE7taw==",
-  "_location": "/require-node",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "version",
-    "registry": true,
-    "raw": "require-node@1.3.2",
-    "name": "require-node",
-    "escapedName": "require-node",
-    "rawSpec": "1.3.2",
-    "saveSpec": null,
-    "fetchSpec": "1.3.2"
-  },
-  "_requiredBy": [
-    "/",
-    "/require-node-loader"
-  ],
-  "_resolved": "https://registry.npmjs.org/require-node/-/require-node-1.3.2.tgz",
-  "_spec": "1.3.2",
-  "_where": "/Users/luoshaohua/open/require-node-example/example1_simple",
+  "version": "2.0.0",
   "author": {
     "name": "luoshaohua",
     "email": "luoshaohua.cn@gmail.com",
@@ -51,6 +23,5 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "version": "1.3.2"
+  }
 }

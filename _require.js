@@ -1,36 +1,32 @@
 ﻿'use strict';
 
 define(function (require, exports, module) {
-    //var q = require('q');
 
-    module.exports = function () {
-        //console.log(new Date(), this, arguments);
+    module.exports = function (moduleName, functionNames, actualParams, config, sync) {
+
         if (arguments.length < 2) {
             throw { msg: '$require arguments.length < 2' };
         }
 
-        var args = Array.prototype.slice.call(arguments);
-        args[2] = Array.prototype.slice.call(args[2]);
-        var moduleName = args[0];
-        var functionName = args[1];
-        var actualParams = args[2];
-        var config = args[3] || {};
-        var async = !args[4];
+        actualParams = Array.prototype.slice.call(actualParams);
+        config = config || {};
+        var async = !sync;
         var q = config.q;
-        var url = config.path || '/require-node';
-        if (config.isDebug) url += '?' + moduleName + '.' + functionName;
+        var url = config.path;
+        if (config.isDebug) url += '?' + moduleName + '::' + functionNames.join('.');
 
         var callback = null;
         if (typeof actualParams[actualParams.length - 1] === 'function') {
             callback = actualParams.pop();
         }
 
-        var headers = { 'Content-Type': 'application/json', 'X-Require-Node': true };
-        //添加防止XSRF攻击的http header
         var match = window.document.cookie.match(/(?:^|\s|;)XSRF-TOKEN\s*=\s*([^;]+)(?:;|$)/);
-        if (match) {
-            headers['X-XSRF-TOKEN'] = match[1];
-        }
+        var headers = {
+            'Content-Type': 'application/json',
+            'X-Require-Node': true,
+            'X-Require-Node-Version': '2.0.0',
+            'X-XSRF-TOKEN': match && match[1] //for xsrf header
+        };
 
         if (async) {
             var defer = q.defer();
@@ -40,8 +36,7 @@ define(function (require, exports, module) {
                 var err = result.shift();
                 if (err) {
                     hookError(err);
-                }
-                else {
+                } else {
                     defer.resolve(result.length > 1 ? result : result[0]);
                 }
             }
@@ -63,8 +58,7 @@ define(function (require, exports, module) {
             type: 'POST',
             url: url,
             headers: headers,
-            xhrFields: config.xhrFields,
-            data: JSON.stringify([moduleName, functionName, actualParams]),
+            data: JSON.stringify([moduleName, functionNames, actualParams]),
             async: async,
             success: handleSuccess,
             error: handleError
@@ -79,8 +73,7 @@ define(function (require, exports, module) {
             config.isDebug && console.log('sync res:', res);
             if (res[0]) {
                 throw res[0];
-            }
-            else {
+            } else {
                 return res[1];
             }
         }
@@ -125,10 +118,7 @@ define(function (require, exports, module) {
             for (var header in options.headers) {
                 xhr.setRequestHeader(header, options.headers[header])
             }
-            options.xhrFields = options.xhrFields || {};
-            for (var field in options.xhrFields) {
-                xhr[field] = options.xhrFields[field];
-            }
+            //xhr.withCredentials = true
 
             var requestDone, status, data, noop = null;
             xhr.onreadystatechange = function (isTimeout) {
