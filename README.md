@@ -104,8 +104,8 @@ options's structure: { req, res, moduleName, functionNames, formalParams, actual
 
 If your back end function want use variable `$req`、`$res`、`$session`、http `$body`, you can define back end function like this:
 ```
-function say(arg1, arg2, $req, otherArg1, otherArg2){
-    console.log($req)
+function say(arg1, arg2, $req, arg4, arg5){
+    console.log($req) // $req is node http req object
 }
 exports.say = say
 ```
@@ -127,7 +127,7 @@ var middleware = require('require-node')({
 ```
 In your back end function, you can use curUser like this:
 ```
-function say(arg1, arg2, curUser, otherArg1, otherArg2){
+function say(arg1, arg2, curUser, arg4, arg5){
     console.log(curUser)
 }
 exports.say = say
