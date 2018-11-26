@@ -88,10 +88,10 @@ app.use((ctx, next) => {
 **4. hook function**
 > Sometimes, for some reason(example: `security` or `login`), we will prevent some function calls. For each http request before processing, require-node calls `preFetch` in Browser and calls `preCall` in Node Server (if throw error or return promise reject, call will be prevent), after server api function called, `postCall` will be call in Node Server and `postFetch` alse be call in Browser.
 
-**preFetch: function(options){ return promise or not; }**
-**preCall: function(options){ return promise or not; }**
-**postCall: function(apiResult, options){ return new api result; }**
-**postFetch: function(apiResult, options){ return new api result; }**
+**preFetch: function (options) { return promise or common value; }**  
+**preCall: function (options) { return promise or common value; }**  
+**postCall: function (apiReturn, options) { return a new apiReturn; }**  
+**postFetch: function (apiReturn, options) { return a new apiReturn; }**  
 
 options's structure: { req, res, moduleName, functionNames, formalParams, actualParams }
 `Note`: In Browser, `req` is xhr(`XMLHttpRequest`) object.
