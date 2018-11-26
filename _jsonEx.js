@@ -18,14 +18,14 @@ function _formatResponse(key, value) {
         case 'Set':
             return new Set(value.__$value$__);
         default:
-            console.warn('unknown type', value.__$type$__, value)
+            console.warn('unknown type', value.__$type$__, value);// eslint-disable-line no-console
             return value;
     }
 }
 
 exports.parse = function (str) {
-    return JSON.parse(str, _formatResponse)
-}
+    return JSON.parse(str, _formatResponse);
+};
 
 
 
@@ -50,7 +50,7 @@ function _formatResult(json, replacer) {
         if (json[key] !== newJson) {
             json[key] = newJson;
         } else {
-            _formatResult(json[key], replacer)
+            _formatResult(json[key], replacer);
         }
     }
 }
@@ -61,7 +61,7 @@ function _resultReplacer(key, value) {
     }
 
     if (key === 'headers') {
-        console.log(value, value instanceof Map, value instanceof Array)
+        console.log(value, value instanceof Map, value instanceof Array);// eslint-disable-line no-console
     }
 
     switch (typeof value) {
@@ -75,35 +75,35 @@ function _resultReplacer(key, value) {
                 return {
                     __$type$__: 'Date',
                     __$value$__: +value
-                }
+                };
             } else if (value instanceof Map) {
                 return {
                     __$type$__: 'Map',
                     __$value$__: [...value]
-                }
+                };
             } else if (value instanceof Set) {
                 return {
                     __$type$__: 'Set',
                     __$value$__: [...value]
-                }
+                };
             } else {
-                return value
+                return value;
             }
         case 'function':
             return {
                 __$type$__: 'Function',
                 __$value$__: '' + value,
                 __$this$__: value.this
-            }
+            };
         default:
             return value;
     }
-    return value;
+    return value;// eslint-disable-line no-unreachable
 }
 
 exports.encodeJSON = function (json) {
     return formatResult(json, _resultReplacer);
-}
+};
 
 
 //////////////////////////////

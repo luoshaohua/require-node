@@ -1,5 +1,4 @@
-﻿
-const REQUIRE_NODE_CONFIG_FILENAME = '__$$REQUIRE_NODE_CONFIG$$__.js'
+﻿// const REQUIRE_NODE_CONFIG_FILENAME = '__$$REQUIRE_NODE_CONFIG$$__.js'
 var getConfig = require('./config');
 var config;
 
@@ -14,10 +13,10 @@ function toCommonJS(modulePath, options) {
             break;
         }
     }
-    console.log('[modulePath]', modulePath)
-    console.log('[moduleName]', moduleName)
+    console.log('[modulePath]', modulePath);// eslint-disable-line no-console
+    console.log('[moduleName]', moduleName);// eslint-disable-line no-console
     if (!moduleName) {
-        throw new Error('File not include in config.base: ' + modulePath)
+        throw new Error('File not include in config.base: ' + modulePath);
     }
 
     // if (modulePath.endsWith(REQUIRE_NODE_CONFIG_FILENAME)) {
@@ -46,7 +45,7 @@ function toCommonJS(modulePath, options) {
             return new Proxy(createAjax(_ajax.__keys_path__.concat(functionName)), handler);
         }
     };
-    module.exports = new Proxy(createAjax([]), handler);`
+    module.exports = new Proxy(createAjax([]), handler);`;
 }
 
 exports.toCommonJS = toCommonJS;

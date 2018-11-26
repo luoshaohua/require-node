@@ -31,7 +31,7 @@ function call(req, res, next) {
         var actualParams = params[2];
         var formalParams = getModuleFormalParams(moduleFunction);
 
-        const options2 = { req, res, moduleName, functionNames, formalParams, actualParams }
+        const options2 = { req, res, moduleName, functionNames, formalParams, actualParams };
         const p1 = Promise.resolve(config.preCall && config.preCall(options2));
         const p2 = Promise.resolve(config.resolve && config.resolve(req, moduleName, functionNames, formalParams, actualParams));
 
@@ -50,7 +50,7 @@ function call(req, res, next) {
                             callbackResolve(result);
                         }
                     }
-                }
+                };
             }
 
             parseActualParams(actualParams, actualParams, req, res);
@@ -75,12 +75,12 @@ function call(req, res, next) {
             }
         }
     }).catch(function (err) {
-        config.isDebug && console.log('call err:', err);
+        config.isDebug && console.log('call err:', err);// eslint-disable-line no-console
         if (err && err.stack) {
             //let err.stack can stringify in funtion: res.status.send
             Object.defineProperty(err, 'message', { value: err.message, enumerable: true });
             config.isDebug && Object.defineProperty(err, 'stack', { value: err.stack, enumerable: true });
-            config.isDebug && console.log('call err enumerable stack:', err.stack);
+            config.isDebug && console.log('call err enumerable stack:', err.stack);// eslint-disable-line no-console
         }
 
         if (res.finished) {
@@ -100,7 +100,7 @@ function call(req, res, next) {
                 }
             }
         }
-    })
+    });
 }
 
 function _formatReqRes(req, res) {
@@ -109,40 +109,42 @@ function _formatReqRes(req, res) {
     if (!res.status) res.status = status => {
         res.statusCode = status;
         return res;
-    }
+    };
     if (!res.send) res.send = data => {
         res.setHeader('Content-Type', 'application/json');
         res.end(typeof data === 'string' ? data : JSON.stringify(data));
-    }
+    };
 
     return new Promise(function (resolve, reject) {
         if (req.hasOwnProperty('body')) {
             resolve();
         } else {
-            require('body-parser').json({ limit: '800mb' })(req, res, resolve)
+            require('body-parser').json({ limit: '800mb' })(req, res, resolve);
         }
     }).then(() => _jsonEx.decodeJSON(req.body));
 }
 
+// eslint-disable-next-line no-useless-escape
 var pathPattern = /^\/([^\.\/]+)[\.\/]([^\(\[%]+)(?:(?:\(|\[|%5B)(.+)(?:\)|\]|%5D))?/i; //%5B is '[', %5D is ']'
 function getParams(req) {
     if (req.headers['x-require-node']) {
-        config.isDebug && console.log('x-require-node:', req.method, req.url);
+        config.isDebug && console.log('x-require-node:', req.method, req.url);// eslint-disable-line no-console
         if (req.body instanceof Array && req.body.length === 3 && req.body[1] instanceof Array && req.body[2] instanceof Array) {
             return req.body;
         }
     } else {
-        var urlPath = req.originalUrl.split('?', 1)[0].slice(config.path.length)
+        var urlPath = req.originalUrl.split('?', 1)[0].slice(config.path.length);
         var match = urlPath.match(pathPattern);
-        config.isDebug && console.log('call path match', match);
+        config.isDebug && console.log('call path match', match);// eslint-disable-line no-console
         if (match) {
+            var params;
             if (req.method === 'POST') {
-                var params = req.body instanceof Array ? req.body : [];
+                params = req.body instanceof Array ? req.body : [];
             } else {
-                var params = match[3] ? JSON.parse('[' + decodeURIComponent(match[3]) + ']') : [];
+                params = match[3] ? JSON.parse('[' + decodeURIComponent(match[3]) + ']') : [];
             }
             //console.log('params',params);
-            return [decodeURIComponent(match[1]), decodeURIComponent(match[2]), params];
+            return [decodeURIComponent(match[1]), [decodeURIComponent(match[2])], params];
         }
     }
     var err = new Error('Bad Request Arguments');
@@ -211,12 +213,12 @@ function moduleFunctionIsCallback(formalParams) {
         callbackFunctionNames = [];
         for (let key in _$inject) {
             if (_$inject[key] === callback) {
-                callbackFunctionNames.push(key)
+                callbackFunctionNames.push(key);
             }
         }
         for (let key in $inject) {
             if ($inject[key] === callback) {
-                callbackFunctionNames.push(key)
+                callbackFunctionNames.push(key);
             }
         }
         //console.log('callbackFunctionNames:', callbackFunctionNames);

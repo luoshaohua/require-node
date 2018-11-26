@@ -13,7 +13,7 @@ module.exports = function (options) {
                 $origin: req.headers && (req.headers.origin || 'http://' + (req.headers.host || req.hostname)),
                 $hostname: req.hostname,
                 $query: req.query
-            }
+            };
         },
 
         // options1 and options2 is Object {req, res, moduleName, functionNames, formalParams, actualParams}
@@ -31,7 +31,7 @@ module.exports = function (options) {
     //format config
     if (config.base) {
         if (config.base['']) {
-            throw new Error('config.base cannot has empty key: ' + JSON.stringify(config.base))
+            throw new Error('config.base cannot has empty key: ' + JSON.stringify(config.base));
         }
         const base = typeof config.base === 'string' ? { '': config.base } : config.base;
         config.base = {};
@@ -42,10 +42,9 @@ module.exports = function (options) {
             }
             config.base[aliasName] = paths.join('/');
         }
-        console.log('config.base', config.base);
     } else {
-        throw new Error('need config base')
+        throw new Error('need config base');
     }
 
     return config;
-}
+};

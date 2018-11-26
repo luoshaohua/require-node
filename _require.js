@@ -1,4 +1,5 @@
 ﻿'use strict';
+/* global define ActiveXObject */
 
 define(function (require, exports, module) {
     var q = require('q');
@@ -32,8 +33,8 @@ define(function (require, exports, module) {
 
         if (async) {
             var defer = q.defer();
-            var handleSuccess = function (result, status, xhr) {
-                config.isDebug && console.log(arguments);
+            var handleSuccess = function (result, status, xhr) {// eslint-disable-line no-unused-vars
+                config.isDebug && console.log(arguments);// eslint-disable-line no-console
                 callback && callback.apply(null, result);
                 var err = result.shift();
                 if (err) {
@@ -41,19 +42,19 @@ define(function (require, exports, module) {
                 } else {
                     defer.resolve(result.length > 1 ? result : result[0]);
                 }
-            }
-            var handleError = function (err, status, xhr) {
-                config.isDebug && console.log(arguments);
+            };
+            var handleError = function (err, status, xhr) {// eslint-disable-line no-unused-vars
+                config.isDebug && console.log(arguments);// eslint-disable-line no-console
                 callback && callback.call(null, err);
                 hookError(err);
-            }
+            };
             var hookError = function (err) {
                 if (config.reject) {
-                    q().then(function () { return config.reject(err) }).then(defer.resolve, defer.reject);
+                    q().then(function () { return config.reject(err); }).then(defer.resolve, defer.reject);
                 } else {
                     defer.reject(err);
                 }
-            }
+            };
         }
 
         var options = {
@@ -64,18 +65,18 @@ define(function (require, exports, module) {
             async: async,
             success: handleSuccess,
             error: handleError
-        }
+        };
 
         var xhr = createXHR(options);
         //xhr.withCredentials = true
 
-        var options1 = { req: xhr, moduleName, functionNames, actualParams }
+        var options1 = { req: xhr, moduleName, functionNames, actualParams };
         
         if (async) {
             var preFetchPromise = Promise.resolve(config.preFetch && config.preFetch(options1));
             return preFetchPromise.then(function () {
 
-                var ret = _ajax(xhr, options);
+                _ajax(xhr, options);
                 return config.postCall ? config.postCall(defer.promise, options1) : defer.promise;
             });
         }
@@ -84,7 +85,7 @@ define(function (require, exports, module) {
 
             var ret = _ajax(xhr, options);
             var res = _jsonEx.parse(ret.responseText);
-            config.isDebug && console.log('sync res:', res);
+            config.isDebug && console.log('sync res:', res);// eslint-disable-line no-console
             // sync mode cannot use config.postCall
             if (res[0]) {
                 throw res[0];
@@ -101,13 +102,13 @@ define(function (require, exports, module) {
                     try { return new ActiveXObject("Msxml2.XMLHTTP"); }
                     catch (e) { return new ActiveXObject("Microsoft.XMLHTTP"); }
                 }
-            }()
+            }();
 
             xhr.open(options.type, options.url, options.async);
 
             options.headers = options.headers || {};
             for (var header in options.headers) {
-                xhr.setRequestHeader(header, options.headers[header])
+                xhr.setRequestHeader(header, options.headers[header]);
             }
             return xhr;
         }
@@ -140,8 +141,6 @@ define(function (require, exports, module) {
                         !httpSuccess(xhr) ?//really success?
                             "error" : "success";
 
-                    var errMsg;
-
                     if (status === "success") {
                         // Watch for, and catch, XML document parse errors
                         try {
@@ -150,7 +149,6 @@ define(function (require, exports, module) {
                         }
                         catch (parserError) {
                             status = "parsererror";
-                            errMsg = parserError;
                         }
                     }
 
@@ -187,5 +185,5 @@ define(function (require, exports, module) {
 
             return false;
         }
-    }
+    };
 });
