@@ -1,24 +1,34 @@
-﻿var _qPath;
-function getQPath(params) {
-    _qPath = _qPath || (require('fs').existsSync(require('path').join(__dirname, 'node_modules/q')) ? 'require-node/node_modules/q' : 'q');
-    return _qPath;
-}
-
-var c = require('./config');
+﻿
+const REQUIRE_NODE_CONFIG_FILENAME = '__$$REQUIRE_NODE_CONFIG$$__.js'
+var getConfig = require('./config');
 var config;
-function toCommonJS(modulePath, moduleName, options) {
-    config = config || c.getConfig(options);
 
-    var configStr = '';
-    ['path', 'isDebug', 'reject'].forEach(key => {
-        var value = config[key];
-        if (value) {
-            configStr += ',' + key + ':' + (typeof value === 'function' ? value.toString() : JSON.stringify(value));
+function toCommonJS(modulePath, options) {
+    modulePath = modulePath.split('?', 1)[0].replace(/\\/g, '/');
+    var moduleName;
+    config = config || getConfig(options);
+    for (var aliasName in config.base) {
+        const path = config.base[aliasName];
+        if (modulePath.startsWith(path)) {
+            moduleName = aliasName + modulePath.slice(path.length);
+            break;
         }
-    })
+    }
+    console.log('[modulePath]', modulePath)
+    console.log('[moduleName]', moduleName)
+    if (!moduleName) {
+        throw new Error('File not include in config.base: ' + modulePath)
+    }
 
-    return `
-    var config = { q: require(${JSON.stringify(getQPath())}) ${configStr} };
+    // if (modulePath.endsWith(REQUIRE_NODE_CONFIG_FILENAME)) {
+    //     return `module.exports = { q: require('q')${configStr} }`;
+    // }
+    //var config = require('${config.base}/${REQUIRE_NODE_CONFIG_FILENAME}');
+
+    var feConfigs = {};
+    ['path', 'isDebug', 'preFetch', 'postFetch', 'reject'].forEach(key => feConfigs[key] = config[key]);
+
+    return `var config = ${JSON.stringify(feConfigs, (key, value) => typeof value === 'function' ? value.toString() : value)};
     var moduleName = ${JSON.stringify(moduleName)};
     var _require = require("require-node/_require.js");
     function createAjax(__keys_path__) {

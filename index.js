@@ -6,10 +6,12 @@ if (typeof global == 'undefined' && typeof window != 'undefined' && typeof windo
     throw err;
 }
 
-var c = require('./config');
+var _jsonEx = require('./_jsonEx');
+var getConfig = require('./config');
 var config;
+
 module.exports = function (options) {
-    config = c.getConfig(options);
+    config = getConfig(options);
     return call;
 };
 
@@ -22,49 +24,18 @@ function call(req, res, next) {
 
         var params = getParams(req);
         //console.log('call params:', params);
-
         var moduleName = params[0];
         var moduleInstance = getModuleInstance(moduleName);
-        if (!moduleInstance) {
-            var err = new Error('Not Found Module:' + moduleName);
-            err.statusCode = 404;
-            throw err;
-        }
-
         var functionNames = params[1];
         var moduleFunction = getModuleFunction(moduleInstance, functionNames);
-        if (!moduleFunction) {
-            var err = new Error(moduleName + 'Not Found Function:' + functionNames.join('.'));
-            err.statusCode = 404;
-            throw err;
-        }
-
         var actualParams = params[2];
         var formalParams = getModuleFormalParams(moduleFunction);
 
-        return new Promise(function (resolve, reject) {
-            if (config.resolve) {
-                try {
-                    var ret = config.resolve(req, moduleName, functionNames, formalParams, actualParams);
-                    if (_isObject(ret) && ret.then) {
-                        ret.then(resolve, reject);
-                    } else {
-                        resolve(ret);
-                    }
-                }
-                catch (err) {
-                    reject(err);
-                }
-            } else {
-                resolve(true);
-            }
-        }).then(function (canCall) {
-            if (!canCall) {
-                var err = new Error('Forbidden Call:' + moduleName + '.' + functionNames.join('.'));
-                err.statusCode = 403;
-                throw err;
-            }
+        const options2 = { req, res, moduleName, functionNames, formalParams, actualParams }
+        const p1 = Promise.resolve(config.preCall && config.preCall(options2));
+        const p2 = Promise.resolve(config.resolve && config.resolve(req, moduleName, functionNames, formalParams, actualParams));
 
+        return Promise.all([p1, p2]).then(function () {
             var isCallback = moduleFunctionIsCallback(formalParams);
             if (isCallback) {
                 var callbackResolve, callbackReject;
@@ -85,14 +56,15 @@ function call(req, res, next) {
             parseActualParams(actualParams, actualParams, req, res);
             parseActualParams(actualParams, formalParams, req, res, callback);
             var result = moduleFunction.apply(moduleInstance, actualParams);
-            return isCallback ? callbackPromise : result;
+            const ret = isCallback ? callbackPromise : result;
+            return config.postCall ? config.postCall(ret, options2) : ret;
         });
     }).then(function (result) {
         if (res.finished) { //res.end() has call
             return;
         }
 
-        result = formatResult(result, _resultReplacer);
+        result = _jsonEx.encodeJSON(result);
         if (req.headers['x-require-node']) {
             res.status(200).send([null, result]);
         } else {
@@ -131,6 +103,27 @@ function call(req, res, next) {
     })
 }
 
+function _formatReqRes(req, res) {
+    //console.log('req', req.url, req.originalUrl, req.body);
+    req.originalUrl = req.originalUrl || req.url;
+    if (!res.status) res.status = status => {
+        res.statusCode = status;
+        return res;
+    }
+    if (!res.send) res.send = data => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(typeof data === 'string' ? data : JSON.stringify(data));
+    }
+
+    return new Promise(function (resolve, reject) {
+        if (req.hasOwnProperty('body')) {
+            resolve();
+        } else {
+            require('body-parser').json({ limit: '800mb' })(req, res, resolve)
+        }
+    }).then(() => _jsonEx.decodeJSON(req.body));
+}
+
 var pathPattern = /^\/([^\.\/]+)[\.\/]([^\(\[%]+)(?:(?:\(|\[|%5B)(.+)(?:\)|\]|%5D))?/i; //%5B is '[', %5D is ']'
 function getParams(req) {
     if (req.headers['x-require-node']) {
@@ -158,10 +151,19 @@ function getParams(req) {
 }
 
 function getModuleInstance(moduleName) {
-    if (moduleName.startsWith(config.baseLastDir)) {
-        return require(config.base + moduleName);
+    if (config.base[moduleName]) {
+        return require(config.base[moduleName]);
+    } else if (config.base['']) {
+        return require(config.base[''] + moduleName);
     } else {
-        return null;
+        const aliasName = moduleName.split('/', 1)[0];
+        if (config.base[aliasName]) {
+            return require(config.base[aliasName] + moduleName.slice(aliasName.length));
+        } else {
+            var err = new Error('Not Found Module:' + moduleName);
+            err.statusCode = 404;
+            throw err;
+        }
     }
 }
 
@@ -169,6 +171,11 @@ function getModuleFunction(moduleInstance, functionNames) {
     let ret = moduleInstance;
     for (var i = 0; i < functionNames.length; i++) {
         ret = ret[functionNames[i]];
+    }
+    if (ret === moduleInstance || !ret) {
+        var err = new Error('Not Found Function:' + functionNames.join('.'));
+        err.statusCode = 404;
+        throw err;
     }
     return ret;
 }
@@ -215,118 +222,4 @@ function moduleFunctionIsCallback(formalParams) {
         //console.log('callbackFunctionNames:', callbackFunctionNames);
     }
     return formalParams.length > 0 && callbackFunctionNames.indexOf(formalParams[formalParams.length - 1]) > -1;
-}
-
-function _formatReqRes(req, res) {
-    //console.log('req', req.url, req.originalUrl, req.body);
-    req.originalUrl = req.originalUrl || req.url;
-    if (!res.status) res.status = status => {
-        res.statusCode = status;
-        return res;
-    }
-    if (!res.send) res.send = data => {
-        res.setHeader('Content-Type', 'application/json');
-        res.end(typeof data === 'string' ? data : JSON.stringify(data));
-    }
-
-    return new Promise(function (resolve, reject) {
-        if (req.hasOwnProperty('body')) {
-            resolve();
-        } else {
-            require('body-parser').json({ limit: '800mb' })(req, res, resolve)
-        }
-    }).then(() => _parseDate(req.body));
-}
-
-function formatResult(json, replacer) {
-    var ret = { ret: json };
-    _formatResult(ret, replacer);
-    return ret.ret;
-}
-
-function _formatResult(json, replacer) {
-    if (!_isObject(json)) {
-        return json;
-    }
-
-    for (var key in json) {
-        if (json instanceof Object && !json.hasOwnProperty(key)) {//Object.create(null)对象没有hasOwnProperty方法
-            continue;
-        }
-        var newJson = replacer(key, json[key]);
-        if (json[key] !== newJson) {
-            json[key] = newJson;
-        } else {
-            _formatResult(json[key], replacer)
-        }
-    }
-}
-
-function _resultReplacer(key, value) {
-    if (!value) {
-        return value;
-    }
-
-    if (key === 'headers') {
-        console.log(value, value instanceof Map, value instanceof Array)
-    }
-
-    switch (typeof value) {
-        case 'string': //为了提速，优先判断是否string，number
-        case 'number':
-            return value;
-        case 'object':
-            if (value instanceof Array) { //为了提速，优先判断是否Array
-                return value;
-            } else if (value instanceof Date) {
-                return {
-                    __$type$__: 'Date',
-                    __$value$__: +value
-                }
-            } else if (value instanceof Map) {
-                return {
-                    __$type$__: 'Map',
-                    __$value$__: [...value]
-                }
-            } else if (value instanceof Set) {
-                return {
-                    __$type$__: 'Set',
-                    __$value$__: [...value]
-                }
-            } else {
-                return value
-            }
-        case 'function':
-            return {
-                __$type$__: 'Function',
-                __$value$__: '' + value,
-                __$this$__: value.this
-            }
-        default:
-            return value;
-    }
-    return value;
-}
-
-function _parseDate(obj) {
-    if (!_isObject(obj)) {
-        return;
-    }
-
-    for (var key in obj) {
-        if (_isObject(obj[key])) {
-            _parseDate(obj[key]);
-        }
-        else if (_isDateTimeStr(obj[key])) {
-            obj[key] = new Date(obj[key]);
-        }
-    }
-}
-
-function _isObject(obj) {
-    return obj !== null && typeof (obj) === 'object';
-}
-
-function _isDateTimeStr(str) {
-    return typeof str === "string" && str[10] === "T" && str[str.length - 1] === "Z" && (str.length === 24 || str.length === 20);
 }

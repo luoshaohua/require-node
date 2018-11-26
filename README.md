@@ -118,13 +118,13 @@ require-node will inject variable req to $req.
 If want define Custom Injected Services, you can config like this(eg: curUser service):
 ```
 var middleware = require('require-node')({
+    base: "path/to/server"
     inject: function(req, res, callback){
         return {
             curUser: req.session && req.session.currentUser, //if you store currentUser in req.session
             otherService: ...
         }
     }
-    alias: ...
 })
 ```
 In your back end function, you can use curUser like this:

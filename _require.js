@@ -1,6 +1,8 @@
 ﻿'use strict';
 
 define(function (require, exports, module) {
+    var q = require('q');
+    var _jsonEx = require('./_jsonEx');
 
     module.exports = function (moduleName, functionNames, actualParams, config, sync) {
 
@@ -11,9 +13,9 @@ define(function (require, exports, module) {
         actualParams = Array.prototype.slice.call(actualParams);
         config = config || {};
         var async = !sync;
-        var q = config.q;
+        // var q = config.q;
         var url = config.path;
-        if (config.isDebug) url += '?' + moduleName + '::' + functionNames.join('.');
+        if (config.isDebug) url += '?' + moduleName + '/' + functionNames.join('.');
 
         var callback = null;
         if (typeof actualParams[actualParams.length - 1] === 'function') {
@@ -64,13 +66,26 @@ define(function (require, exports, module) {
             error: handleError
         }
 
-        var ret = _ajax(options);
+        var xhr = createXHR(options);
+        //xhr.withCredentials = true
+
+        var options1 = { req: xhr, moduleName, functionNames, actualParams }
+        
         if (async) {
-            return defer.promise;
+            var preFetchPromise = Promise.resolve(config.preFetch && config.preFetch(options1));
+            return preFetchPromise.then(function () {
+
+                var ret = _ajax(xhr, options);
+                return config.postCall ? config.postCall(defer.promise, options1) : defer.promise;
+            });
         }
         else {
-            var res = JSON.parse(ret.responseText, _formatResponse);
+            config.preFetch && config.preFetch(options1);
+
+            var ret = _ajax(xhr, options);
+            var res = _jsonEx.parse(ret.responseText);
             config.isDebug && console.log('sync res:', res);
+            // sync mode cannot use config.postCall
             if (res[0]) {
                 throw res[0];
             } else {
@@ -78,32 +93,8 @@ define(function (require, exports, module) {
             }
         }
 
-        function _formatResponse(key, value) {
-            if (!(value && typeof value === 'object' && value.hasOwnProperty('__$type$__') && value.hasOwnProperty('__$value$__'))) {
-                return value;
-            }
-            switch (value.__$type$__) {
-                case 'Function':
-                    config.isDebug && console.log(value)
-                    var ret = eval("(function(){return " + value.__$value$__ + " })()");
-                    if (value.__$this$__) {
-                        return ret.bind(value.__$this$__);
-                    } else {
-                        return ret;
-                    }
-                case 'Date':
-                    return new Date(value.__$value$__);
-                case 'Map':
-                    return new Map(value.__$value$__);
-                case 'Set':
-                    return new Set(value.__$value$__);
-                default:
-                    console.warn('unknown type', value.__$type$__, value)
-                    return value;
-            }
-        }
 
-        function _ajax(options) {
+        function createXHR(options) {
             var xhr = function () {
                 try { return new XMLHttpRequest(); }
                 catch (e) {
@@ -118,7 +109,10 @@ define(function (require, exports, module) {
             for (var header in options.headers) {
                 xhr.setRequestHeader(header, options.headers[header])
             }
-            //xhr.withCredentials = true
+            return xhr;
+        }
+
+        function _ajax(xhr, options) {
 
             var requestDone, status, data, noop = null;
             xhr.onreadystatechange = function (isTimeout) {
@@ -152,7 +146,7 @@ define(function (require, exports, module) {
                         // Watch for, and catch, XML document parse errors
                         try {
                             // process the data (runs the xml through httpData regardless of callback)
-                            data = JSON.parse(xhr.responseText, _formatResponse);
+                            data = _jsonEx.parse(xhr.responseText);
                         }
                         catch (parserError) {
                             status = "parsererror";

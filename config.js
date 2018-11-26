@@ -1,8 +1,7 @@
-exports.getConfig = function (options) {
+module.exports = function (options) {
 
     var config = {
         path: '/require-node',
-        resolve: null,
         _inject: function (req, res, callback) {
             return {
                 $res: res,
@@ -15,21 +14,35 @@ exports.getConfig = function (options) {
                 $hostname: req.hostname,
                 $query: req.query
             }
-        }
+        },
+
+        // options1 and options2 is Object {req, res, moduleName, functionNames, formalParams, actualParams}
+        preFetch: undefined,//(options1) => {} 
+        preCall: undefined,//(options2) => {}
+        postCall: undefined,//(result, options2) => {}
+        postFetch: undefined,//(result, options1) => {}
+
+        resolve: undefined, //deprecated, 
+        reject: undefined, //deprecated, 
     };
 
-    for (var key in options) {
-        config[key] = options[key];
-    }
+    Object.assign(config, options);
 
     //format config
     if (config.base) {
-        var subBase = config.base.split(/[\\/]/);
-        if (!subBase[subBase.length - 1]) {
-            subBase = subBase.slice(0, -1);
+        if (config.base['']) {
+            throw new Error('config.base cannot has empty key: ' + JSON.stringify(config.base))
         }
-        config.base = subBase.slice(0, -1).join('/');
-        config.baseLastDir = '/' + subBase[subBase.length - 1] + '/';
+        const base = typeof config.base === 'string' ? { '': config.base } : config.base;
+        config.base = {};
+        for (var aliasName in base) {
+            var paths = base[aliasName].split(/[\\/]/);
+            if (!paths[paths.length - 1]) {
+                paths = paths.slice(0, -1);
+            }
+            config.base[aliasName] = paths.join('/');
+        }
+        console.log('config.base', config.base);
     } else {
         throw new Error('need config base')
     }
