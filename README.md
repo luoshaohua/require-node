@@ -1,7 +1,7 @@
 # require-node
 ## A node middleware let that browser js code can require node js code which is still running at node server
 
-### *Example for how to use `require-node` in [https://www.npmjs.com/package/require-node-example](https://www.npmjs.com/package/require-node-example)*
+### *Example for how to use `require-node` in [https://github.com/luoshaohua/require-node-example](https://github.com/luoshaohua/require-node-example)*
 
 ---
 
