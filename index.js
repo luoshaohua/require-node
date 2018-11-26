@@ -12,10 +12,10 @@ var config;
 
 module.exports = function (options) {
     if (options.resolve) {
-        config.warn('config.resolve is deprecated, please use config.preCall! Note: arguments changed!!');
+        console.warn('config.resolve is deprecated, please use config.preCall! Note: arguments changed!!');
     }
     if (options.reject) {
-        config.warn('config.reject is deprecated, please use config.postFetch! Note: arguments changed!!');
+        console.warn('config.reject is deprecated, please use config.postFetch! Note: arguments changed!!');
     }
 
     config = getConfig(options);

@@ -27,7 +27,7 @@ define(function (require, exports, module) {
         var headers = {
             'Content-Type': 'application/json',
             'X-Require-Node': true,
-            'X-Require-Node-Version': '2.0.0',
+            'X-Require-Node-Version': '2.0.2',
             'X-XSRF-TOKEN': match && match[1] //for xsrf header
         };
 
