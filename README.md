@@ -93,7 +93,7 @@ app.use((ctx, next) => {
 **postCall: function (apiReturn, options) { return a new apiReturn; }**  
 **postFetch: function (apiReturn, options) { return a new apiReturn; }**  
 
-options's structure: { req, res, moduleName, functionNames, formalParams, actualParams }
+options's structure: { req, res, moduleName, functionNames, formalParams, actualParams }  
 `Note`: In Browser, `req` is xhr(`XMLHttpRequest`) object.
 
 **5. inject: function(req, res){ return {curUser: req.session && req.session.curUser}; }**
