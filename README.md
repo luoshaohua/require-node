@@ -15,10 +15,10 @@ For example: A javascript module(test.js) in Node server, you can require and ca
 
 **In Browser code :**
 ```
-var test = require('path/to/test.js');
+var test = require('path/to/test.js')
 
-var sum = await test.add(1, 2);     // sum = 3
-var env = await test.getNodeEnv();  // env is server env value
+var sum = await test.add(1, 2)     // sum = 3
+var env = await test.getNodeEnv()  // env is server env value
 ```
 **In Node server code (test.js) :**
 ```
@@ -38,14 +38,15 @@ $ npm install require-node
 ```
 
 ## Use
+
+`middleware`: function (req, res, next) { ... }
 ```
-//middleware: function(req, res, next){ ... }
 var middleware = require('require-node')({
     base: "path/to/server"
 })
 ```
 
-You can use this middleware in node HTTP
+You can use this `middleware` in node HTTP :
 ```
 require('http').createServer(function (req, res) {
     middleware(req, res, function () {
@@ -54,14 +55,14 @@ require('http').createServer(function (req, res) {
 })
 ```
 
-also, you can use this middleware in node [EXPRESS](https://www.npmjs.com/package/express)
+**also**, you can use this `middleware` in node [EXPRESS](https://www.npmjs.com/package/express) :
 ```
 var express = require('express')
 var app = express()
 app.use(middleware)
 ```
 
-or, you can use this middleware in node [KOA](https://www.npmjs.com/package/koa)
+**or**, you can use this `middleware` in node [KOA](https://www.npmjs.com/package/koa) :
 ```
 var Koa = require('koa')
 var app = new Koa()
