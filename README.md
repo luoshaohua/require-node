@@ -41,9 +41,8 @@ $ npm install require-node
 
 `middleware`: function (req, res, next) { ... }
 ```
-var middleware = require('require-node')({
-    base: "path/to/server"
-})
+var requireNode = require('require-node')
+var middleware = requireNode({ base: "path/to/server" })
 ```
 
 You can use this `middleware` in node HTTP :
