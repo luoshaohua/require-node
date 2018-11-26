@@ -15,26 +15,20 @@ For example: A javascript module(test.js) in Node server, you can require and ca
 
 **In Browser code :**
 ```
-var test = require('path/to/test.js')
-test.getServerTime(function(err, result) {
-    if(err) return;
-    console.log('Node server time:', result.nodeServerTime)
-    console.log('MySql server time:', result.mysqlServerTime)
-})
+var test = require('path/to/test.js');
+
+var sum = await test.add(1, 2);     // sum = 3
+var env = await test.getNodeEnv();  // env is server env value
 ```
 **In Node server code (test.js) :**
 ```
-var mysql = require('mysql')
-function getServerTime(callback) {
-    mysql.query('select now()', function(err, rows){
-        callback(err, {
-            nodeServerTime: new Date(),
-            mysqlServerTime: rows && rows[0]
-        })
-    }) 
+exports.add = function (a, b) {
+    return a + b;
 }
 
-exports.getServerTime = getServerTime
+exports.getNodeEnv = function () {
+    return process.env;
+}
 ```
 Note: also support `promise`、`async/await` and `import` grammar.
 
@@ -123,7 +117,7 @@ If want define Custom Injected Services, you can config like this(eg: curUser se
 ```
 var middleware = require('require-node')({
     base: "path/to/server"
-    inject: function(req, res, callback){
+    inject: function(req, res){
         return {
             curUser: req.session && req.session.currentUser, //if you store currentUser in req.session
             otherService: ...
