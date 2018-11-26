@@ -3,7 +3,7 @@
 
 ### *Example for how to use `require-node` in [https://www.npmjs.com/package/require-node-example](https://www.npmjs.com/package/require-node-example)*
 
-***
+---
 
 require-node: In client(eg: Browser), you can REQUIRE and CALL server side javascript which is still running at server(eg: Node.js).
 
@@ -42,7 +42,6 @@ Note: also support `promise`、`async/await` and `import` grammar.
 ```
 $ npm install require-node
 ```
-**Note:** if use require-node with **require.js** or **sea.js**, you cann't install globally. **(Install without -g parameter)**
 
 ## Use
 ```
@@ -79,32 +78,37 @@ app.use((ctx, next) => {
 })
 ```
 
-***
+---
 
 ## Config options
 
 **1. base: '/path/to/server', `ONLY this config is necessary!`**
-> Config which back end file can be use in front end.
+> Config which back end file or dir can be use in front end. `base` can be set `String`/`Array`/`Object`.
 
 **2. path: '/require-node'** (default)
 > Config which url path to be use sending ajax.
 
-**3. withCredentials: false** (default)
-> IN CROSS DOMAIN, config XMLHttpRequest object with cookie or not.
-
-**4. isDebug: false** (default)
+**3. isDebug: false** (default)
 > Config require-node output log or not.
 
-**5. resolve: function(req, moduleName, functionName, formalParams){ return true/promise; }**
-> Sometimes, for security reasons, we will prevent some function calls. For each http request before processing, require-node calls this resolve configuration function, if the return is not true or promise resolve not true, call will be prevent.
+**4. hook function**
+> Sometimes, for some reason(example: `security` or `login`), we will prevent some function calls. For each http request before processing, require-node calls `preFetch` in Browser and calls `preCall` in Node Server (if throw error or return promise reject, call will be prevent), after server api function called, `postCall` will be call in Node Server and `postFetch` alse be call in Browser.
 
-**6. inject: function(req, res, callback){ return {curUser: req.session && req.session.curUser}; }**
+**preFetch: function(options){ return promise or not; }**
+**preCall: function(options){ return promise or not; }**
+**postCall: function(apiResult, options){ return new api result; }**
+**postFetch: function(apiResult, options){ return new api result; }**
+
+options's structure: { req, res, moduleName, functionNames, formalParams, actualParams }
+`Note`: In Browser, `req` is xhr(`XMLHttpRequest`) object.
+
+**5. inject: function(req, res){ return {curUser: req.session && req.session.curUser}; }**
 > Use inject config, you can define Custom Injected Services. For more details, please refer to the next section: Inject Service.
 
 ## Inject Service
 **1. Use Default Service**
 
-If your back end function want use variable **$req**、**$res**、**$session**、http **$body**, you can define back end function like this:
+If your back end function want use variable `$req`、`$res`、`$session`、http `$body`, you can define back end function like this:
 ```
 function say(arg1, arg2, $req, otherArg1, otherArg2){
     console.log($req)
@@ -135,30 +139,8 @@ function say(arg1, arg2, curUser, otherArg1, otherArg2){
 exports.say = say
 ```
 
-**3. Define Callback Name**
-
-By default, I think of your callback style back end function like this:
-```
-function say(arg1, arg2, ... , callback){
-
-}
-exports.say = say
-```
-If your last formal parameter name is not a "callback", such as "cb", you need config inject:
-```
-var middleware = require('require-node')({
-    inject: function(req, res, callback){
-        return {
-            //curUser: req.session && req.session.currentUser,
-            cb: callback
-        }
-    }
-    base: ...
-})
-```
-
 That's all.
 
-***
+---
 
-*Example for how to use `require-node` in [https://www.npmjs.com/package/require-node-example](https://www.npmjs.com/package/require-node-example)*
+*Example for how to use `require-node` in [https://github.com/luoshaohua/require-node-example](https://github.com/luoshaohua/require-node-example)*

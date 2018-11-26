@@ -1,5 +1,7 @@
 {
-  "version": "2.0.0",
+  "name": "require-node",
+  "version": "2.0.1",
+  "keywords": ["require-node"],
   "author": {
     "name": "luoshaohua",
     "email": "luoshaohua.cn@gmail.com",
@@ -16,7 +18,6 @@
   "homepage": "https://github.com/luoshaohua/require-node#readme",
   "license": "ISC",
   "main": "index.js",
-  "name": "require-node",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/luoshaohua/require-node.git"
