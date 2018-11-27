@@ -61,7 +61,7 @@ define(function (require, exports, module) {
             type: 'POST',
             url: url,
             headers: headers,
-            data: JSON.stringify([moduleName, functionNames, actualParams]),
+            data: JSON.stringify([moduleName, functionNames, _jsonEx.encodeJSON(actualParams)]),
             async: async,
             success: handleSuccess,
             error: handleError
@@ -71,7 +71,7 @@ define(function (require, exports, module) {
         //xhr.withCredentials = true
 
         var options1 = { req: xhr, moduleName, functionNames, actualParams };
-        
+
         if (async) {
             var preFetchPromise = Promise.resolve(config.preFetch && config.preFetch(options1));
             return preFetchPromise.then(function () {

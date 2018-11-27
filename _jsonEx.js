@@ -1,24 +1,26 @@
+const IN_NODE = !(typeof global == 'undefined' && typeof window != 'undefined' && typeof window.alert === 'function');
+
 function _formatResponse(key, value) {
-    if (!(value && typeof value === 'object' && value.hasOwnProperty('__$type$__') && value.hasOwnProperty('__$value$__'))) {
+    if (!(value && typeof value === 'object' && value.hasOwnProperty('__$RN_type$__') && value.hasOwnProperty('__$RN_value$__'))) {
         return value;
     }
-    switch (value.__$type$__) {
+    switch (value.__$RN_type$__) {
         case 'Function':
             //config.isDebug && console.log(value)
-            var ret = eval("(function(){return " + value.__$value$__ + " })()");
-            if (value.__$this$__) {
-                return ret.bind(value.__$this$__);
+            var ret = eval("(function(){return " + value.__$RN_value$__ + " })()");
+            if (value.__$RN_this$__) {
+                return ret.bind(value.__$RN_this$__);
             } else {
                 return ret;
             }
         case 'Date':
-            return new Date(value.__$value$__);
+            return new Date(value.__$RN_value$__);
         case 'Map':
-            return new Map(value.__$value$__);
+            return (IN_NODE || window.Map) && new Map(value.__$RN_value$__);
         case 'Set':
-            return new Set(value.__$value$__);
+            return (IN_NODE || window.Set) && new Set(value.__$RN_value$__);
         default:
-            console.warn('unknown type', value.__$type$__, value);// eslint-disable-line no-console
+            console.warn('unknown type', value.__$RN_type$__, value);// eslint-disable-line no-console
             return value;
     }
 }
@@ -26,8 +28,6 @@ function _formatResponse(key, value) {
 exports.parse = function (str) {
     return JSON.parse(str, _formatResponse);
 };
-
-
 
 ////////////////////////////////////////////////////////////
 
@@ -60,10 +60,6 @@ function _resultReplacer(key, value) {
         return value;
     }
 
-    if (key === 'headers') {
-        console.log(value, value instanceof Map, value instanceof Array);// eslint-disable-line no-console
-    }
-
     switch (typeof value) {
         case 'string': //为了提速，优先判断是否string，number
         case 'number':
@@ -73,27 +69,27 @@ function _resultReplacer(key, value) {
                 return value;
             } else if (value instanceof Date) {
                 return {
-                    __$type$__: 'Date',
-                    __$value$__: +value
+                    __$RN_type$__: 'Date',
+                    __$RN_value$__: +value
                 };
-            } else if (value instanceof Map) {
+            } else if ((IN_NODE || window.Map) && value instanceof Map) {
                 return {
-                    __$type$__: 'Map',
-                    __$value$__: [...value]
+                    __$RN_type$__: 'Map',
+                    __$RN_value$__: [...value]
                 };
-            } else if (value instanceof Set) {
+            } else if ((IN_NODE || window.Set) && value instanceof Set) {
                 return {
-                    __$type$__: 'Set',
-                    __$value$__: [...value]
+                    __$RN_type$__: 'Set',
+                    __$RN_value$__: [...value]
                 };
             } else {
                 return value;
             }
         case 'function':
             return {
-                __$type$__: 'Function',
-                __$value$__: '' + value,
-                __$this$__: value.this
+                __$RN_type$__: 'Function',
+                __$RN_value$__: '' + value,
+                __$RN_this$__: value.this
             };
         default:
             return value;
@@ -105,8 +101,8 @@ exports.encodeJSON = function (json) {
     return formatResult(json, _resultReplacer);
 };
 
+////////////////////////////////////////////////////////////
 
-//////////////////////////////
 function decodeJSON(obj) {
     if (!_isObject(obj)) {
         return;
@@ -121,7 +117,7 @@ function decodeJSON(obj) {
 }
 
 function _isObject(obj) {
-    return obj !== null && typeof (obj) === 'object';
+    return obj !== null && typeof obj === 'object';
 }
 
 exports.decodeJSON = decodeJSON;

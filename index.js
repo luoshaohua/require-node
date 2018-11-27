@@ -12,10 +12,10 @@ var config;
 
 module.exports = function (options) {
     if (options.resolve) {
-        console.warn('config.resolve is deprecated, please use config.preCall! Note: arguments changed!!');
+        console.warn('config.resolve is deprecated, please use config.preCall! Note: arguments changed!!');// eslint-disable-line no-console
     }
     if (options.reject) {
-        console.warn('config.reject is deprecated, please use config.postFetch! Note: arguments changed!!');
+        console.warn('config.reject is deprecated, please use config.postFetch! Note: arguments changed!!');// eslint-disable-line no-console
     }
 
     config = getConfig(options);
@@ -82,6 +82,10 @@ function call(req, res, next) {
             }
         }
     }).catch(function (err) {
+        if (next && err && err.message === '__promise_break__') {
+            return next();//next() and _formatReqRes() has return is for koa
+        }
+
         config.isDebug && console.log('call err:', err);// eslint-disable-line no-console
         if (err && err.stack) {
             //let err.stack can stringify in funtion: res.status.send
@@ -100,11 +104,7 @@ function call(req, res, next) {
             if (err && err.$view && res.render) {
                 res.render(err.$view, err);
             } else {
-                if (next && err && err.message === '__promise_break__') {
-                    return next();//next() and _formatReqRes() has return is for koa
-                } else {
-                    res.status(err.statusCode || 500).send(err);
-                }
+                res.status(err.statusCode || 500).send(err);
             }
         }
     });
