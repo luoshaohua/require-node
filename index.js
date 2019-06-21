@@ -160,6 +160,12 @@ function getParams(req) {
 }
 
 function getModuleInstance(moduleName) {
+    if (moduleName.indexOf('../') != -1 || moduleName.indexOf('..\\') != -1) {
+        var err = new Error('Forbidden Module:' + moduleName);
+        err.statusCode = 403;
+        throw err;
+    }
+
     if (config.base[moduleName]) {
         return require(config.base[moduleName]);
     } else if (config.base['']) {
