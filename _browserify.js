@@ -24,10 +24,15 @@ function toCommonJS(modulePath, options) {
     // }
     //var config = require('${config.base}/${REQUIRE_NODE_CONFIG_FILENAME}');
 
-    var feConfigs = {};
-    ['path', 'isDebug', 'preFetch', 'postFetch', 'reject'].forEach(key => feConfigs[key] = config[key]);
+    //var feConfigs = {};
+    //['path', 'isDebug', 'preFetch', 'postFetch', 'reject'].forEach(key => feConfigs[key] = config[key]);
 
-    return `var config = ${JSON.stringify(feConfigs, (key, value) => typeof value === 'function' ? value.toString() : value)};
+    return `var config = {
+        ${['path', 'isDebug', 'preFetch', 'postFetch', 'reject'].map(key => {
+            var value = config[key];
+            return JSON.stringify(key) + ":" + (typeof value === 'function' ? value.toString() : JSON.stringify(value));
+        }).join(",")}
+    };
     var moduleName = ${JSON.stringify(moduleName)};
     var _require = require("require-node/_require.js");
     function createAjax(__keys_path__) {
